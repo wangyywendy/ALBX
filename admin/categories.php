@@ -1,86 +1,47 @@
 <?php
+/**
+ * 分类管理
+ */
 
-require_once '../functions.php';
+// 载入脚本
+// ========================================
 
+require '../functions.php';
+
+// 访问控制
+// ========================================
+
+// 获取登录用户信息
 xiu_get_current_user();
 
-// 判断是否为需要编辑的数据
-// ====================================
+// 处理表单提交
+// ========================================
 
-function add_category () {
-  if (empty($_POST['name']) || empty($_POST['slug'])) {
-    $GLOBALS['message'] = '请完整填写表单！';
-    $GLOBALS['success'] = false;
-    return;
-  }
-
-  // 接收并保存
-  $name = $_POST['name'];
-  $slug = $_POST['slug'];
-
-  // insert into categories values (null, 'slug', 'name');
-  $rows = xiu_execute("insert into categories values (null, '{$slug}', '{$name}');");
-
-  $GLOBALS['success'] = $rows > 0;
-  $GLOBALS['message'] = $rows <= 0 ? '添加失败！' : '添加成功！';
-}
-
-function edit_category () {
-  global $current_edit_category;
-
-  // // 只有当时编辑并点保存
-  // if (empty($_POST['name']) || empty($_POST['slug'])) {
-  //   $GLOBALS['message'] = '请完整填写表单！';
-  //   $GLOBALS['success'] = false;
-  //   return;
-  // }
-
-  // 接收并保存
-  $id = $current_edit_category['id'];
-  $name = empty($_POST['name']) ? $current_edit_category['name'] : $_POST['name'];
-  $current_edit_category['name'] = $name;
-  $slug = empty($_POST['slug']) ? $current_edit_category['slug'] : $_POST['slug'];
-  $current_edit_category['slug'] = $slug;
-
-  // insert into categories values (null, 'slug', 'name');
-  $rows = xiu_execute("update categories set slug = '{$slug}', name = '{$name}' where id = {$id}");
-
-  $GLOBALS['success'] = $rows > 0;
-  $GLOBALS['message'] = $rows <= 0 ? '更新失败！' : '更新成功！';
-}
-
-// 判断是编辑主线还是添加主线
-if (empty($_GET['id'])) {
-
-  // 添加
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    add_category();
-  }
-
-} else {
-  // 编辑
-  // 客户端通过 URL 传递了一个 ID
-  // => 客户端是要来拿一个修改数据的表单
-  // => 需要拿到用户想要修改的数据
-  $current_edit_category = xiu_fetch_one('select * from categories where id = ' . $_GET['id']);
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    edit_category();
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  // 表单校验
+  if (empty($_POST['slug']) || empty($_POST['name'])) {
+    // 表单不合法，提示错误信息（可以分开判断，提示更加具体的信息）
+    $message = '完整填写表单内容';
+  } else if (empty($_POST['id'])) {
+    // 表单合法，数据持久化（通俗说法就是保存数据）
+    // 没有提交 ID 代表新增，则新增数据
+    $sql = sprintf("insert into categories values (null, '%s', '%s')", $_POST['slug'], $_POST['name']);
+    // 响应结果
+    $message = xiu_execute($sql) > 0 ? '保存成功' : '保存失败';
+  } else {
+    // 提交 ID 就代表是更新，则更新数据
+    $sql = sprintf("update categories set slug = '%s', name = '%s' where id = %d", $_POST['slug'], $_POST['name'], $_POST['id']);
+    // 响应结果
+    $message = xiu_execute($sql) > 0 ? '保存成功' : '保存失败';
   }
 }
 
-// // 如果修改操作与查询操作在一起，一定是先做修改，再查询
+// 查询数据
+// ========================================
 
-// if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-//   // 一旦表单提交请求并且没有通过 URL 提交 ID 就意味着是要添加数据
-//   if (empty($_GET['id'])) {
-//     add_category();
-//   } else {
-//     edit_category();
-//   }
-// }
+// 查询全部分类信息
+$categories = xiu_query('select * from categories');
 
-// 查询全部的分类数据
-$categories = xiu_query('select * from categories;');
 
 ?>
 <!DOCTYPE html>
@@ -98,52 +59,35 @@ $categories = xiu_query('select * from categories;');
   <script>NProgress.start()</script>
 
   <div class="main">
-    <?php include 'inc/navbar.php'; ?>
-
+    <nav class="navbar">
+      <button class="btn btn-default navbar-btn fa fa-bars"></button>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="profile.php"><i class="fa fa-user"></i>个人中心</a></li>
+        <li><a href="logout.php"><i class="fa fa-sign-out"></i>退出</a></li>
+      </ul>
+    </nav>
     <div class="container-fluid">
       <div class="page-title">
         <h1>分类目录</h1>
       </div>
-      <!-- 有错误信息时展示 -->
-      <?php if (isset($message)): ?>
-      <?php if ($success): ?>
-      <div class="alert alert-success">
-        <strong>成功！</strong> <?php echo $message; ?>
+      <?php if (isset($message)) : ?>
+      <!-- 重点就是在输出时知道到底是成功还是失败，找规律，或者定义标识变量都可以 -->
+      <div class="alert alert-<?php echo $message == '保存成功' ? 'success' : 'danger'; ?>">
+        <strong><?php echo $message == '保存成功' ? '成功' : '错误'; ?>！</strong><?php echo $message; ?>
       </div>
-      <?php else: ?>
-      <div class="alert alert-danger">
-        <strong>错误！</strong> <?php echo $message; ?>
-      </div>
-      <?php endif ?>
-      <?php endif ?>
+      <?php endif; ?>
       <div class="row">
         <div class="col-md-4">
-          <?php if (isset($current_edit_category)): ?>
-          <form action="<?php echo $_SERVER['PHP_SELF']; ?>?id=<?php echo $current_edit_category['id']; ?>" method="post" autocomplete="off" >
-            <h2>编辑《<?php echo $current_edit_category['name']; ?>》</h2>
-            <div class="form-group">
-              <label for="name">名称</label>
-              <input id="name" class="form-control" name="name" type="text" placeholder="分类名称" value="<?php echo $current_edit_category['name']; ?>">
-            </div>
-            <div class="form-group">
-              <label for="slug">别名</label>
-              <input id="slug" class="form-control" name="slug" type="text" placeholder="slug" value="<?php echo $current_edit_category['slug']; ?>">
-              <p class="help-block">https://zce.me/category/<strong>slug</strong></p>
-            </div>
-            <div class="form-group">
-              <button class="btn btn-primary" type="submit">保存</button>
-            </div>
-          </form>
-          <?php else: ?>
-          <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" autocomplete="off" >
+          <form action="/admin/categories.php" method="post">
             <h2>添加新分类目录</h2>
+            <input id="id" name="id" type="hidden">
             <div class="form-group">
               <label for="name">名称</label>
               <input id="name" class="form-control" name="name" type="text" placeholder="分类名称">
             </div>
             <div class="form-group">
               <label for="slug">别名</label>
-              <input id="slug" class="form-control" name="slug" type="text" placeholder="slug" >
+              <input id="slug" class="form-control" name="slug" type="text" placeholder="slug">
               <p class="help-block">https://zce.me/category/<strong>slug</strong></p>
             </div>
             <div class="form-group">
@@ -151,7 +95,6 @@ $categories = xiu_query('select * from categories;');
               <button class="btn btn-default btn-cancel" type="button" style="display: none;">取消</button>
             </div>
           </form>
-          <?php endif ?>
         </div>
         <div class="col-md-8">
           <div class="page-action">
@@ -168,17 +111,17 @@ $categories = xiu_query('select * from categories;');
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($categories as $item): ?>
-              <tr>
-                <td class="text-center"><input type="checkbox" data-id="<?php echo $item['id']; ?>"></td>
+              <?php foreach ($categories as $item) { ?>
+              <tr data-id="<?php echo $item['id']; ?>">
+                <td class="text-center"><input type="checkbox"></td>
                 <td><?php echo $item['name']; ?></td>
                 <td><?php echo $item['slug']; ?></td>
                 <td class="text-center">
-                   <a href="javascript:;" class="btn btn-info btn-xs btn-edit">编辑</a>
+                  <a href="javascript:;" class="btn btn-info btn-xs btn-edit">编辑</a>
                   <a href="/admin/category-delete.php?id=<?php echo $item['id']; ?>" class="btn btn-danger btn-xs">删除</a>
                 </td>
               </tr>
-              <?php endforeach ?>
+              <?php } ?>
             </tbody>
           </table>
         </div>
@@ -192,55 +135,52 @@ $categories = xiu_query('select * from categories;');
   <script src="/static/assets/vendors/jquery/jquery.js"></script>
   <script src="/static/assets/vendors/bootstrap/js/bootstrap.js"></script>
   <script>
-    // 1. 不要重复使用无意义的选择操作，应该采用变量去本地化
-    $(function ($) {
-      // 在表格中的任意一个 checkbox 选中状态变化时
-      var $tbodyCheckboxs = $('tbody input')
+    $(function () {
+      // 获取所需操作的界面元素
+      var $btnDelete = $('.btn-delete')
       var $thCheckbox = $('th > input[type=checkbox]')
-      //var $tdCheckbox = $('td > input[type=checkbox]')
-      var $btnDelete = $('#btn_delete')
+      var $tdCheckbox = $('td > input[type=checkbox]')
 
-      // 定义一个数组记录被选中的
-      var allCheckeds = []
-      $tbodyCheckboxs.on('change', function () {
-        // this.dataset['id']
-        // console.log($(this).attr('data-id'))
-        // console.log($(this).data('id'))
-        var id = $(this).data('id')
+      // 用于记录界面上选中行的数据 ID
+      var checked = []
 
-        // 根据有没有选中当前这个 checkbox 决定是添加还是移除
-        if ($(this).prop('checked')) {
-          allCheckeds.push(id)
+      /**
+       * 表格中的复选框选中发生改变时控制删除按钮的链接参数和显示状态
+       */
+      $tdCheckbox.on('change', function () {
+        var $this = $(this)
+
+        // 为了可以在这里获取到当前行对应的数据 ID
+        // 在服务端渲染 HTML 时，给每一个 tr 添加 data-id 属性，记录数据 ID
+        // 这里通过 data-id 属性获取到对应的数据 ID
+        var id = parseInt($this.parent().parent().data('id'))
+
+        // ID 如果不合理就忽略
+        if (!id) return
+
+        if ($this.prop('checked')) {
+          // 选中就追加到数组中
+          checked.push(id)
         } else {
-          allCheckeds.splice(allCheckeds.indexOf(id), 1)
+          // 未选中就从数组中移除
+          checked.splice(checked.indexOf(id), 1)
         }
 
-        // 根据剩下多少选中的 checkbox 决定是否显示删除
-        allCheckeds.length ? $btnDelete.fadeIn() : $btnDelete.fadeOut()
-        $btnDelete.prop('search', '?id=' + allCheckeds)
-        //$btnDelete.prop('href', '/admin/inc/categories.php?id=' + allCheckeds)
+        // 有选中就显示操作按钮，没选中就隐藏
+        checked.length ? $btnDelete.fadeIn() : $btnDelete.fadeOut()
+
+        // 批量删除按钮链接参数
+        // search 是 DOM 标准属性，用于设置或获取到的是 a 链接的查询字符串
+        $btnDelete.prop('search', '?id=' + checked.join(','))
       })
 
-      // ## version 1 =================================
-      // $tbodyCheckboxs.on('change', function () {
-      //   // 有任意一个 checkbox 选中就显示，反之隐藏
-      //   var flag = false
-      //   $tbodyCheckboxs.each(function (i, item) {
-      //     // attr 和 prop 区别：
-      //     // - attr 访问的是 元素属性
-      //     // - prop 访问的是 元素对应的DOM对象的属性
-      //     // console.log($(item).prop('checked'))
-      //     if ($(item).prop('checked')) {
-      //       flag = true
-      //     }
-      //   })
-
-      //   flag ? $btnDelete.fadeIn() : $btnDelete.fadeOut()
-      // })
+      /**
+       * 全选 / 全不选
+       */
       $thCheckbox.on('change', function () {
         var checked = $(this).prop('checked')
         // 设置每一行的选中状态并触发 上面 👆 的事件
-        $tbodyCheckboxs.prop('checked', checked).trigger('change')
+        $tdCheckbox.prop('checked', checked).trigger('change')
       })
 
       /**
