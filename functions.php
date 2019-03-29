@@ -38,31 +38,6 @@ function xiu_get_current_user () {
 }
 
 /**
- * 通过一个数据库查询获取多条数据
- * => 索引数组套关联数组
- */
-// function xiu_fetch ($sql) {
-//   $conn = mysqli_connect(XIU_DB_HOST, XIU_DB_USER, XIU_DB_PASS, XIU_DB_NAME);
-//   if (!$conn) {
-//     die('<h1>Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error() . '</h1>');
-
-//   $query = mysqli_query($conn, $sql);
-//   if (!$query) {
-//     // 查询失败
-//     return false;
-//   }
-
-//   while ($row = mysqli_fetch_assoc($query)) {
-//     $result[] = $row;
-//   }
-
-//   mysqli_free_result($query);
-//   mysqli_close($conn);
-//   mysqli_set_charset($conn, 'utf8');
-
-//   return $result;
-// }
-/**
  * 根据配置文件信息创建一个数据库连接，注意用完以后需要关闭
  * @return mysqli 数据库连接对象
  */
@@ -79,16 +54,6 @@ function xiu_fetch () {
 
   return $conn;
 }
-
-
-/**
- * 获取单条数据
- * => 关联数组
- */
-// function xiu_fetch_one ($sql) {
-//   $res = xiu_fetch($sql);
-//   return isset($res[0]) ? $res[0] : null;
-// }
 
 /**
  * 执行一个查询语句，返回查询到的数据（关联数组混合索引数组）
