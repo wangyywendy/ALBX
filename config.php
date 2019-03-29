@@ -21,6 +21,4 @@ define('XIU_DB_PASS', '123456');
  */
 define('XIU_DB_NAME', 'baixiu-dev');
 
-// D:\www\baixiu-dev\config.php
-// D:\www\baixiu-dev
 define('ROOT_DIR', dirname(__FILE__));
