@@ -75,100 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   }
 } 
 
-// if (empty($_GET['id'])) {
-
-//   // 添加
-//   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-//     // 数据校验
-//   // ------------------------------
-
-//   if (empty($_POST['slug'])
-//     || empty($_POST['title'])
-//     || empty($_POST['created'])
-//     || empty($_POST['content'])
-//     || empty($_POST['status'])
-//     || empty($_POST['category'])) {
-//     // 缺少必要数据
-//     $message = '请完整填写所有内容';
-//   } else if (xiu_query(sprintf("select count(1) from posts where slug = '%s'", $_POST['slug']))[0][0] > 0) {
-//     // slug 重复
-//     $message = '别名已经存在，请修改别名';
-//   } else {
-//     // 接收文件并保存
-//     // ------------------------------
-
-//     // 如果选择了文件 $_FILES['feature']['error'] => 0
-//     if (empty($_FILES['feature']['error'])) {
-//       // PHP 在会自动接收客户端上传的文件到一个临时的目录
-//       $temp_file = $_FILES['feature']['tmp_name'];
-//       // 我们只需要把文件保存到我们指定上传目录
-//       $target_file = '../static/uploads/' . $_FILES['feature']['name'];
-//       if (move_uploaded_file($temp_file, $target_file)) {
-//         $image_file = '/static/uploads/' . $_FILES['feature']['name'];
-//       }
-//     }
-
-//     // 接收数据
-//     // ------------------------------
-
-//     $slug = $_POST['slug'];
-//     $title = $_POST['title'];
-//     $feature = isset($image_file) ? $image_file : '';
-//     $created = $_POST['created'];
-//     $content = $_POST['content'];
-//     $status = $_POST['status'];
-//     $user_id = $current_user['id'];
-//     $category_id = $_POST['category'];
-
-//     // 保存数据
-//     // ------------------------------
-
-//     // 拼接查询语句
-//     $sql = sprintf(
-//       "insert into posts values (null, '%s', '%s', '%s', '%s', '%s', 0, 0, '%s', %d, %d)",
-//       $slug,
-//       $title,
-//       $feature,
-//       $created,
-//       $content,
-//       $status,
-//       $user_id,
-//       $category_id
-//     );
-
-//     // 执行 SQL 保存数据
-//     if (xiu_execute($sql) > 0) {
-//       // 保存成功 跳转
-//       header('Location: /admin/posts.php');
-//       exit;
-//     } else {
-//       // 保存失败
-//       $message = '保存失败，请重试';
-//     }
-//   }
-//   }
-
-// } else {
-//   // 编辑
-//   // 客户端通过 URL 传递了一个 ID
-//   // => 客户端是要来拿一个修改数据的表单
-//   // => 需要拿到用户想要修改的数据
-//   $current_edit_posts = xiu_query('select * from posts where id = ' . $_GET['id']);
-//   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-//      // 接收并保存
-//     $id = $current_edit_posts['id'];
-//     $title = empty($_POST['title']) ? $current_edit_posts['title'] : $_POST['title'];
-//     $current_edit_posts['title'] = $title;
-//     $content = empty($_POST['contents']) ? $current_edit_posts['contents'] : $_POST['contents'];
-//     $current_edit_posts['contents'] = $contents;
-  
-//     // insert into categories values (null, 'slug', 'name');
-//     $rows = xiu_execute("update posts set title = '{$tltle}', content = '{$content}'   where id = {$id}");
-  
-//     $GLOBALS['success'] = $rows > 0;
-//     $GLOBALS['message'] = $rows <= 0 ? '更新失败！' : '更新成功！';
-//   }
-// }
 
 // 查询数据
 // ========================================
@@ -184,6 +90,7 @@ $categories = xiu_query('select * from categories');
   <title>Add new post &laquo; Admin</title>
   <link rel="stylesheet" href="/static/assets/vendors/bootstrap/css/bootstrap.css">
   <link rel="stylesheet" href="/static/assets/vendors/font-awesome/css/font-awesome.css">
+  <link rel="stylesheet" href="/static/assets/vendors/simplemde/simplemde.min.css">
   <link rel="stylesheet" href="/static/assets/vendors/nprogress/nprogress.css">
   <link rel="stylesheet" href="/static/assets/css/admin.css">
   <script src="/static/assets/vendors/nprogress/nprogress.js"></script>
@@ -196,12 +103,7 @@ $categories = xiu_query('select * from categories');
 
     <div class="container-fluid">
       <div class="page-title">
-        <h1>写文章</h1>
-      </div>
-      <!-- 有错误信息时展示 -->
-      <!-- <div class="alert alert-danger">
-        <strong>错误！</strong>发生XXX错误
-      </div> -->
+        <h1>写文章</h1>>
       <form class="row" action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" autocomplete="off">
         <div class="col-md-9">
           <div class="form-group">
@@ -257,8 +159,10 @@ $categories = xiu_query('select * from categories');
 
   <script src="/static/assets/vendors/jquery/jquery.js"></script>
   <script src="/static/assets/vendors/bootstrap/js/bootstrap.js"></script>
-  <script src="/static/assets/vendors/ueditor/ueditor.config.js"></script>
-  <script src="/static/assets/vendors/ueditor/ueditor.all.js"></script>
+  <script src="/static/assets/vendors/simplemde/simplemde.min.js"></script>
+  <script src="/static/assets/vendors/moment/moment.js"></script>
+<!--   <script src="/static/assets/vendors/ueditor/ueditor.config.js"></script>
+  <script src="/static/assets/vendors/ueditor/ueditor.all.js"></script> -->
   <script>
     $(function () {
       // 当文件域文件选择发生改变过后，本地预览选择的图片
