@@ -3,7 +3,22 @@
 require_once '../functions.php';
 
 xiu_get_current_user();
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  if (!empty($_POST['site_logo'])) {
+    xiu_execute(sprintf('update `options` set `value` = \'%s\' where `key` = \'site_logo\'', $_POST['site_logo']));
+  }
 
+  xiu_execute(sprintf('update `options` set `value` = \'%s\' where `key` = \'comment_status\'', !empty($_POST['comment_status'])));
+
+  xiu_execute(sprintf('update `options` set `value` = \'%s\' where `key` = \'comment_reviewed\'', !empty($_POST['comment_reviewed'])));
+}
+
+$data = xiu_query('select * from options');
+$options = array();
+
+foreach ($data as $item) {
+  $options[$item['key']] = $item['value'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -34,9 +49,10 @@ xiu_get_current_user();
         <div class="form-group">
           <label class="col-sm-3 control-label">头像</label>
           <div class="col-sm-6">
+            <input id="site_logo" name="site_logo" type="hidden">
             <label class="form-image">
               <input id="avatar" type="file">
-              <img src="/static/assets/img/default.png">
+              <img src="<?php echo $options['site_logo']; ?>">
               <i class="mask fa fa-upload"></i>
             </label>
           </div>
@@ -44,21 +60,21 @@ xiu_get_current_user();
         <div class="form-group">
           <label for="email" class="col-sm-3 control-label">邮箱</label>
           <div class="col-sm-6">
-            <input id="email" class="form-control" name="email" type="type" value="w@zce.me" placeholder="邮箱" readonly>
+            <input id="email" class="form-control" name="email" type="type" value="admin@sample.com" placeholder="邮箱" readonly>
             <p class="help-block">登录邮箱不允许修改</p>
           </div>
         </div>
         <div class="form-group">
           <label for="slug" class="col-sm-3 control-label">别名</label>
           <div class="col-sm-6">
-            <input id="slug" class="form-control" name="slug" type="type" value="zce" placeholder="slug">
-            <p class="help-block">https://zce.me/author/<strong>zce</strong></p>
+            <input id="slug" class="form-control" name="slug" type="type" value="wendy" placeholder="slug">
+            <p class="help-block">https://sample.com/author/<strong>zce</strong></p>
           </div>
         </div>
         <div class="form-group">
           <label for="nickname" class="col-sm-3 control-label">昵称</label>
           <div class="col-sm-6">
-            <input id="nickname" class="form-control" name="nickname" type="type" value="汪磊" placeholder="昵称">
+            <input id="nickname" class="form-control" name="nickname" type="type" value="wendy" placeholder="昵称">
             <p class="help-block">限制在 2-16 个字符</p>
           </div>
         </div>
@@ -83,6 +99,34 @@ xiu_get_current_user();
 
   <script src="/static/assets/vendors/jquery/jquery.js"></script>
   <script src="/static/assets/vendors/bootstrap/js/bootstrap.js"></script>
+  <script>
+    $(function () {
+      // 异步上传文件
+      $('#avatar').on('change', function () {
+        // 选择文件后异步上传文件
+        var formData = new FormData()
+        formData.append('file', $(this).prop('files')[0])
+
+        // 上传图片
+        $.ajax({
+          url: '/admin/upload.php',
+          cache: false,
+          contentType: false,
+          processData: false,
+          data: formData,
+          type: 'post',
+          success: function (res) {
+            if (res.success) {
+              $('#site_logo').val(res.data)
+              $('#avatar').siblings('img').attr('src', res.data).fadeIn()
+            } else {
+              alert('上传文件失败')
+            }
+          }
+        })
+      })
+    })
+  </script>
   <script>NProgress.done()</script>
 </body>
 </html>
